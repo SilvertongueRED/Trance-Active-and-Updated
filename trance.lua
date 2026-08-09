@@ -5,6 +5,7 @@ function HEX(hex)
     return color
   end
 
+
 local nativefs = require("nativefs")
 local lovely = require("lovely")
 Trance_config = {palette = "Base Game", font = "m6x11"}
@@ -16,7 +17,8 @@ function is_color(v)
     return type(v) == 'table' and #v == 4 and type(v[1]) == "number" and type(v[2]) == "number" and type(v[3]) == "number" and type(v[4]) == "number"
 end
 function load_file_with_fallback(primary_path, fallback_path, reset_config)
-    local success, result = pcall(function() return assert(load(nativefs.read(primary_path)))() end)
+    local f = nativefs.read(primary_path)
+    local success, result = pcall(function() return assert(load(f))() end)
     if success then
         return result
     end
@@ -26,33 +28,57 @@ function load_file_with_fallback(primary_path, fallback_path, reset_config)
         return fallback_result
     end
 end
-Trance = assert(load(nativefs.read(lovely.mod_dir .. "/Trance/colors/Base Game.lua")))()
+
+local info = nativefs.getDirectoryItemsInfo(lovely.mod_dir)
+local trance_path = ""
+for i, v in pairs(info) do
+  if v.type == "directory" and nativefs.getInfo(lovely.mod_dir .. "/" .. v.name .. "/trance.lua") then trance_path = lovely.mod_dir .. "/" .. v.name end
+end
+
+if not nativefs.getInfo(trance_path) then
+    error(
+        'Could not find proper Trance folder.\nPlease make sure that Trance is installed correctly and the folders arent nested.')
+end
+
+Trance = assert(load(nativefs.read(trance_path .. "/colors/Base Game.lua")))()
+Trance_selected = trance_path .. "/colors/" .. (Trance_config.palette or "Base Game") .. ".lua"
 Trance_theme = load_file_with_fallback(
-    lovely.mod_dir .. "/Trance/colors/" .. (Trance_config.palette or "Base Game") .. ".lua",
-    lovely.mod_dir .. "/Trance/colors/Base Game.lua",
-    function() Trance_config.palette = "Base Game" end
+    trance_path .. "/colors/" .. (Trance_config.palette or "Base Game") .. ".lua",
+    trance_path .. "/colors/Base Game.lua",
+    function()  end
 )
+Default_theme = assert(load(nativefs.read(trance_path .. "/colors/Base Game.lua")))()
 Trance_font = load_file_with_fallback(
-    lovely.mod_dir .. "/Trance/fonts/" .. (Trance_config.font or "m6x11") .. ".lua",
-    lovely.mod_dir .. "/Trance/fonts/m6x11.lua",
+    trance_path .. "/fonts/" .. (Trance_config.font or "m6x11") .. ".lua",
+    trance_path .. "/fonts/m6x11.lua",
     function() Trance_config.font = "m6x11" end
 )
-for k, v in pairs(Trance_theme) do
-    if is_color(v) then 
-        Trance[k] = v
-    elseif type(v) == 'table' then
-        for _k, _v in pairs(Trance_theme[k]) do
-            if is_color(_v) then 
-                Trance[k][_k] = _v
-            end
+
+function Trance_load_colour_table(c, t)
+    t = t or Trance
+    for k, v in pairs(c or {}) do
+        if is_color(v) then
+             Trance.default_colours[k] = Trance.default_colours[k] or copy_table(v)
+            t[k] = v
+        elseif type(v) == 'table' then
+            t[k] = t[k] or {}
+            Trance_load_colour_table(v, t[k])
         end
     end
 end
-local file = nativefs.read(lovely.mod_dir .. "/Trance/fonts/"..(Trance_config.font or "m6x11")..".ttf")
+
+function Trance_load_theme(theme)
+    if not Trance.default_colours then
+        Trance.default_colours = {}
+    end
+    Trance_load_colour_table(Default_theme)
+    Trance_load_colour_table(theme or Trance_theme)
+end
+local file = nativefs.read(trance_path .. "/fonts/"..(Trance_config.font or "m6x11")..".ttf")
 local gsl = Game.set_language
 function Game:set_language()
     gsl(self)
-    local file = nativefs.read(lovely.mod_dir .. "/Trance/fonts/"..(Trance_config.font or "m6x11")..".ttf")
+    local file = nativefs.read(trance_path .. "/fonts/"..(Trance_config.font or "m6x11")..".ttf")
     love.filesystem.write("temp-font.ttf", file)
     G.LANG.font.FONT = love.graphics.newFont("temp-font.ttf", G.TILESIZE * Trance_font.render_scale)
     for k, v in pairs(Trance_font) do
@@ -62,14 +88,14 @@ function Game:set_language()
 end
 
 
-local files = nativefs.getDirectoryItems(lovely.mod_dir .. "/Trance/colors")
+local files = nativefs.getDirectoryItems(trance_path .. "/colors")
 Trance_palettes = {}
 for _, v in pairs(files) do
     if v:match("%.lua$") then
         Trance_palettes[#Trance_palettes+1] = v:gsub("%.lua$", "")
     end
 end
-files = nativefs.getDirectoryItems(lovely.mod_dir .. "/Trance/fonts")
+files = nativefs.getDirectoryItems(trance_path .. "/fonts")
 Trance_fonts = {}
 for _, v in pairs(files) do
     if v:match("%.lua$") then
@@ -117,9 +143,9 @@ end
 G.FUNCS.set_Trance_font = function(x)
     Trance_config.font = x.to_val
     
-    Trance_font = assert(load(nativefs.read(lovely.mod_dir .. "/Trance/fonts/"..(Trance_config.font or "m6x11")..".lua")))()
+    Trance_font = assert(load(nativefs.read(trance_path .. "/fonts/"..(Trance_config.font or "m6x11")..".lua")))()
     
-    local file = nativefs.read(lovely.mod_dir .. "/Trance/fonts/"..Trance_config.font..".ttf")
+    local file = nativefs.read(trance_path .. "/fonts/"..Trance_config.font..".ttf")
     love.filesystem.write("temp-font.ttf", file)
     G.LANG.font.FONT = love.graphics.newFont("temp-font.ttf", G.TILESIZE * Trance_font.render_scale)
     for k, v in pairs(Trance_font) do
@@ -135,35 +161,76 @@ end
 G.FUNCS.set_Trance_palette = function(x)
     Trance_config.palette = x.to_val
     
-    Trance = assert(load(nativefs.read(lovely.mod_dir .. "/Trance/colors/Base Game.lua")))()
-    Trance_theme = assert(load(nativefs.read(lovely.mod_dir .. "/Trance/colors/"..Trance_config.palette..".lua")))()
-    for k, v in pairs(Trance_theme) do
-        if is_color(v) then 
-            Trance[k] = v
-        elseif type(v) == 'table' then
-            for _k, _v in pairs(Trance_theme[k]) do
-                if is_color(_v) then 
-                    Trance[k][_k] = _v
-                end
-            end
-        end
-    end
+    Trance = assert(load(nativefs.read(trance_path .. "/colors/Base Game.lua")))()
+    Trance_theme = assert(load(nativefs.read(trance_path .. "/colors/"..Trance_config.palette..".lua")))()
+    Trance_load_theme()
     Trance_set_globals(G, 1)
 end
+if not SMODS then
+
 local createOptionsRef = create_UIBox_options
-  function create_UIBox_options()
-  contents = createOptionsRef()
-  local m = UIBox_button({
-  minw = 5,
-  button = "tranceMenu",
-  label = {
-  "Trance"
-  },
-  colour = G.C.BLUE
-  })
-  table.insert(contents.nodes[1].nodes[1].nodes[1].nodes, #contents.nodes[1].nodes[1].nodes[1].nodes + 1, m)
-  return contents
+    function create_UIBox_options()
+        contents = createOptionsRef()
+        local m = UIBox_button({
+            minw = 5,
+            button = "tranceMenu",
+            label = {
+                "Trance"
+            },
+            colour = G.C.BLUE
+        })
+        table.insert(contents.nodes[1].nodes[1].nodes[1].nodes, #contents.nodes[1].nodes[1].nodes[1].nodes + 1, m)
+        return contents
+    end
 end
+
+local function tranceTabDefinition()
+    local palette_idx = 0
+    for i = 1, #Trance_palettes do
+        if Trance_palettes[i] == Trance_config.palette then
+            palette_idx = i
+            break
+        end
+    end
+    local font_idx = 0
+    for i = 1, #Trance_fonts do
+        if Trance_fonts[i] == Trance_config.font then
+            font_idx = i
+            break
+        end
+    end
+    return {
+        n = G.UIT.ROOT,
+        config = {
+            emboss = 0.05,
+            minh = 6,
+            r = 0.1,
+            minw = 10,
+            align = "cm",
+            padding = 0.2,
+            colour = G.C.BLACK
+        },
+        nodes = {
+            create_option_cycle({
+                label = "Selected Palette",
+                scale = 0.8,
+                w = 4,
+                options = Trance_palettes,
+                opt_callback = 'set_Trance_palette',
+                current_option = palette_idx,
+            }),
+            create_option_cycle({
+                label = "Selected Font",
+                scale = 0.8,
+                w = 4,
+                options = Trance_fonts,
+                opt_callback = 'set_Trance_font',
+                current_option = font_idx,
+            }),
+        },
+    }
+end
+
 G.FUNCS.tranceMenu = function(e)
     local tabs = create_tabs({
         snap_to_nav = true,
@@ -171,52 +238,7 @@ G.FUNCS.tranceMenu = function(e)
             {
                 label = "Trance",
                 chosen = true,
-                tab_definition_function = function()
-                    local palette_idx = 0
-                    for i = 1, #Trance_palettes do
-                        if Trance_palettes[i] == Trance_config.palette then
-                            palette_idx = i
-                            break
-                        end
-                    end
-                    local font_idx = 0
-                    for i = 1, #Trance_fonts do
-                        if Trance_fonts[i] == Trance_config.font then
-                            font_idx = i
-                            break
-                        end
-                    end
-                    return {
-                        n = G.UIT.ROOT,
-                        config = {
-                            emboss = 0.05,
-                            minh = 6,
-                            r = 0.1,
-                            minw = 10,
-                            align = "cm",
-                            padding = 0.2,
-                            colour = G.C.BLACK
-                        },
-                        nodes = {
-                            create_option_cycle({
-                                label = "Selected Palette",
-                                scale = 0.8,
-                                w = 4,
-                                options = Trance_palettes,
-                                opt_callback = 'set_Trance_palette',
-                                current_option = palette_idx,
-                            }),
-                            create_option_cycle({
-                                label = "Selected Font",
-                                scale = 0.8,
-                                w = 4,
-                                options = Trance_fonts,
-                                opt_callback = 'set_Trance_font',
-                                current_option = font_idx,
-                            }),
-                        },
-                    }
-                end
+                tab_definition_function = tranceTabDefinition()
             },
         }})
     G.FUNCS.overlay_menu{
@@ -226,4 +248,7 @@ G.FUNCS.tranceMenu = function(e)
             }),
         config = {offset = {x=0,y=10}}
     }
+end
+if SMODS then
+    SMODS.Mods.Trance.config_tab = tranceTabDefinition
 end
