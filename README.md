@@ -8,6 +8,7 @@ This is a maintained fork of [SpectralPack/Trance](https://github.com/SpectralPa
 
 | Version | Change |
 | --- | --- |
+| 1.2.1 | The options menu **Trance** button is compact, so the menu still fits on screen with many mods installed. |
 | 1.2.0 | The **Trance** button is added to the options (pause) menu whether or not Steamodded is loaded. The parent only added it when Steamodded was absent. |
 | 1.2.0 | The Trance screen opened from that button gets its tab as a function, which is what the game expects. |
 | 1.2.0 | New palette: **Third Street Saints**. |

@@ -201,6 +201,8 @@ function create_UIBox_options(...)
         list[last + 1] = UIBox_button({
             id = 'trance_button',
             minw = 5,
+            minh = 0.5, -- compact: the options menu is already tall with other mods installed
+            scale = 0.4,
             button = "tranceMenu",
             label = {
                 "Trance"
