@@ -2,12 +2,14 @@
 
 A colour and font manager for Balatro. Pick a palette and a font and the whole game recolours, from the splash screen to blinds, suits, hand levels and the UI.
 
-This is a maintained fork of [SpectralPack/Trance](https://github.com/SpectralPack/Trance). It stays in step with the parent and adds fixes and extras on top. As of v1.2.0 the parent has no commits newer than the one this fork is based on (`3f86c2e`).
+This is a maintained fork of [SpectralPack/Trance](https://github.com/SpectralPack/Trance). The parent repository was archived by its owner on Aug 24, 2026 and is read-only, so this fork is where fixes and additions now land, including the pull requests that were still open on the parent. The code is based on the parent's last commit (`3f86c2e`).
 
 ## What this fork adds
 
 | Version | Change |
 | --- | --- |
+| 1.3.0 | New palette **OLED Friendly** (blacks out the chips and mult score boxes and the options button), from parent PR #10 by Chris Riker (rikercd). |
+| 1.3.0 | New font **League Gothic**, from parent PR #11 by jack5github. League Gothic is licensed under the SIL Open Font License 1.1. |
 | 1.2.1 | The options menu **Trance** button is compact, so the menu still fits on screen with many mods installed. |
 | 1.2.0 | The **Trance** button is added to the options (pause) menu whether or not Steamodded is loaded. The parent only added it when Steamodded was absent. |
 | 1.2.0 | The Trance screen opened from that button gets its tab as a function, which is what the game expects. |
@@ -37,11 +39,11 @@ Your choice is saved to `%AppData%\Balatro\config\Trance.lua`, outside the mods 
 
 ## Palettes
 
-Base Game, CODE, Coonie's Theme, Dark Red, Jevil, Mule, Pastel, Planet, Queen, Simple Blue, Spooky, Third Street Saints, Trans
+Base Game, CODE, Coonie's Theme, Dark Red, Jevil, Mule, OLED Friendly, Pastel, Planet, Queen, Simple Blue, Spooky, Third Street Saints, Trans
 
 ## Fonts
 
-Bahnschrift, Calibri, Century Gothic, Comic Sans, Futura, Monogram, Noto Sans, Segoe, m3x6, m5x7, m6x11
+Bahnschrift, Calibri, Century Gothic, Comic Sans, Futura, League Gothic, Monogram, Noto Sans, Segoe, m3x6, m5x7, m6x11
 
 ## Add your own
 
@@ -62,6 +64,8 @@ Bump `version` in `manifest.json`, add `release-notes/vX.Y.Z.md`, push to `main`
 - [lmesh91](https://github.com/lmesh91): original mod and overhaul
 - MathIsFun0, crimsonseraphim, GayCoonie, someone23832 and avandemortel2137: parent contributions, palettes and fonts
 - Ruby (lord-ruby): latest parent update
+- Chris Riker (rikercd): OLED Friendly palette
+- Jack5 (jack5github): League Gothic font
 - SilvertongueRED: this fork
 
 Trance is a SpectralPack project. See the parent repository for its licence and history.
