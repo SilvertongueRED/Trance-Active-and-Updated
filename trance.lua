@@ -166,22 +166,52 @@ G.FUNCS.set_Trance_palette = function(x)
     Trance_load_theme()
     Trance_set_globals(G, 1)
 end
-if not SMODS then
+-- Pause / options menu button.
+-- Added whether or not Steamodded is loaded, so Trance is always reachable from the in-run options menu.
+-- The button column is located by searching for the Settings button instead of one fixed nesting depth,
+-- the button is only added once, and any failure leaves the stock options menu untouched.
+local function Trance_find_option_buttons(node, depth)
+    if type(node) ~= 'table' or (depth or 0) > 8 then return nil end
+    if type(node.nodes) == 'table' then
+        for _, child in pairs(node.nodes) do
+            local inner = type(child) == 'table' and type(child.nodes) == 'table' and child.nodes[1] or nil
+            local cfg = type(inner) == 'table' and inner.config or nil
+            if cfg and cfg.button == 'settings' then return node.nodes end
+        end
+        for _, child in pairs(node.nodes) do
+            local found = Trance_find_option_buttons(child, (depth or 0) + 1)
+            if found then return found end
+        end
+    end
+    return nil
+end
 
 local createOptionsRef = create_UIBox_options
-    function create_UIBox_options()
-        contents = createOptionsRef()
-        local m = UIBox_button({
+function create_UIBox_options(...)
+    local options_ui = createOptionsRef(...)
+    local ok, err = pcall(function()
+        local list = Trance_find_option_buttons(options_ui)
+        if not list then return end
+        local last = 0
+        for k, child in pairs(list) do
+            if type(k) == 'number' and k > last then last = k end
+            local inner = type(child) == 'table' and type(child.nodes) == 'table' and child.nodes[1] or nil
+            if type(inner) == 'table' and inner.config and inner.config.id == 'trance_button' then return end
+        end
+        list[last + 1] = UIBox_button({
+            id = 'trance_button',
             minw = 5,
+            minh = 0.5, -- compact: the options menu is already tall with other mods installed
+            scale = 0.4,
             button = "tranceMenu",
             label = {
                 "Trance"
             },
             colour = G.C.BLUE
         })
-        table.insert(contents.nodes[1].nodes[1].nodes[1].nodes, #contents.nodes[1].nodes[1].nodes[1].nodes + 1, m)
-        return contents
-    end
+    end)
+    if not ok then print("Trance: could not add options menu button: " .. tostring(err)) end
+    return options_ui
 end
 
 local function tranceTabDefinition()
@@ -238,7 +268,7 @@ G.FUNCS.tranceMenu = function(e)
             {
                 label = "Trance",
                 chosen = true,
-                tab_definition_function = tranceTabDefinition()
+                tab_definition_function = tranceTabDefinition
             },
         }})
     G.FUNCS.overlay_menu{
